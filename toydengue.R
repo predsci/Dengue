@@ -61,7 +61,7 @@ sigmaV = 1.0 / 10.0
 #
 # One over Average Infectious period in host - this is a vector of length ns (one over 4-12 days)
 
-gamma =1.0 / 6.0 *  array(1,ns)
+gamma =1.0 / 8.0 *  array(1,ns)
 
 
 #
@@ -74,11 +74,12 @@ beta = 70.0 / days_per_year * array(1,ns)
 
 alpha = 70.0 / days_per_year * array(1,ns)
 
+
 #
 # Per capita infection-induced mortality probabilities - this is a vector of length ns (low or zero)
 
 rho = 0.0 * array(1, ns)
-rho[2] = 0.05
+
 #
 # The average number of mosquitoes per person (2)
 
@@ -97,7 +98,7 @@ eta = 0.5 * array(1, ns)
 #
 # One over the Average length of time spent in state of enhanced immunity to other serotypes this is a vector of length ns. (2-9 months)
 
-delta =  2. / days_per_year * array(1, ns)
+delta =  1. / days_per_year * array(1, ns)
 
 #
 # The effect of increased susceptibility to infection with a second serotype chi_j > 1 this is a vector of length ns
@@ -108,7 +109,7 @@ chi = 1.0 * array(1, ns)
 #
 #  Loss of antibody-dependent enhancement ADE. The period od ADE is 1/omega
 
-omega = 2.0 / days_per_year 
+omega = 1.0 / days_per_year * array(1, ns)
 
 #
 # Seed for random number generator - currently not used 
@@ -126,7 +127,7 @@ fracS0 = 0.29
 #
 # Initial number of Humans exposed to each serotype. This is an array of length ns
 
-sEp = rep(0, ns)
+sEp = 10 * 1:ns
 
 #
 # Initial number of infectious with serotype i.  This is an array of length ns
@@ -145,6 +146,14 @@ Vi = array(0, ns)
 
 ## End of Initial Conditions 
 ## --------------------------------
+
+
+## calculate R0[i]
+##
+
+R0 = k * alpha * beta * sigmaH * sigmaV /(muV *(gamma + muH)*(sigmaH + muH)*(sigmaV + muV))
+
+print(R0)
 
 #
 # Allocate an array for the time series of the ns serotypes
@@ -169,14 +178,40 @@ for (i in 1:nweeks)
 	
 rownames(rtn) = paste0('den',1:ns)
 
-colvec = c(rainbow(ns),'black')
+colvec = rainbow(ns)
 
-par(mar=c(5,5,2,5))
-plot(tps,rtn[1,],type='l',col=colvec[1],xlab = 'Time (years)',ylab='Incidence',ylim=c(0,max(rtn)))
+par(mar=c(5,5,2,5),mfrow=c(2,1))
+plot(tps,rtn[1,],type='l',col=colvec[1],xlab = 'Time (years)',ylab='Incidence (n-serotypes)',ylim=c(0,max(rtn)))
 for (i in 1:ns) lines(tps,rtn[i,] ,col=colvec[i])
-legend('topright',c(rownames(rtn),'total'),bty='n',text.col=colvec)
+legend('topleft',rownames(rtn),bty='n',text.col=colvec)
+legend('topright','total',bty='n',text.col='black')
 par(new=TRUE)
-plot(tps, rtnTot, col='black', type='l', xaxt='n', yaxt='n', xlab='',ylab='')
+plot(tps, rtnTot, col='black', type='l', xaxt='n', yaxt='n', xlab='',ylab='',lwd=2)
 axis(4)
 mtext(text='Total Incidence', side=4, line =2)
+
+# Now plot again, after removing the initial large peak
+#
+
+iburn = 10 # In years
+index = which(tps > iburn)
+tpsS <- tps[index]
+rtnS <- rtn[,index]
+rtnTotS <- rtnTot[index]
+
+
+
+
+par(mar=c(5,5,2,5))
+plot(tpsS,rtnS[1,],type='l',col=colvec[1],xlab = 'Time (years)',ylab='Incidence (n-serotypes)',ylim=c(0,max(rtnS)))
+for (i in 1:ns) lines(tpsS,rtnS[i,] ,col=colvec[i])
+legend('topleft',rownames(rtn),bty='n',text.col=colvec)
+legend('topright','total',bty='n',text.col='black')
+par(new=TRUE)
+plot(tpsS, rtnTotS, col='black', type='l', xaxt='n', yaxt='n', xlab='',ylab='',lwd=2)
+axis(4)
+mtext(text='Total Incidence', side=4, line =2)
+
+
+
 
